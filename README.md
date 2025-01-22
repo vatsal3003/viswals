@@ -67,7 +67,7 @@ and consumer will extended as API on `http://localhost:8080/`
 
 `go test -v ./...`
 
-Run above command to 
+Execute above command to run all test cases
 
 ### Environment Variables
 

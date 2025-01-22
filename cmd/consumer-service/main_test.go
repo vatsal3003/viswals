@@ -106,7 +106,6 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 func (s *IntegrationTestSuite) TestPostgreSQL() {
 	// Test PostgreSQL operations
 	s.Run("PostgreSQL CRUD Operations", func() {
-		// Insert
 		result, err := s.pgDB.Exec(
 			"INSERT INTO test_users (name, email) VALUES ($1, $2)",
 			"Test User",

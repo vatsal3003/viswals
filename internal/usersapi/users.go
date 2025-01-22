@@ -52,6 +52,7 @@ func (api *API) GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 
 	err = json.NewEncoder(w).Encode(models.Response{
 		Status: consts.StatusSuccess,
@@ -75,6 +76,7 @@ func (api *API) GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
 
 	err = json.NewEncoder(w).Encode(models.Response{
 		Status: consts.StatusSuccess,

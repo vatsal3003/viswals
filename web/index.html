@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Users SSE</title>
+    <style>
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+
+      table,
+      th,
+      td {
+        border: 1px solid black;
+      }
+
+      th,
+      td {
+        padding: 8px;
+        text-align: left;
+      }
+    </style>
+  </head>
+  <body>
+    <center>
+      <h1>Users</h1>
+    </center>
+    <br />
+    <br />
+
+    <table id="table">
+      <thead>
+        <tr>
+          <th>User ID</th>
+          <th>First Name</th>
+          <th>Last Name</th>
+          <th>Email Address</th>
+          <th>Created At</th>
+          <th>Deleted At</th>
+          <th>Merged At</th>
+          <th>Parent User ID</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <script>
+      const sse = new EventSource(`http://localhost:8080/users/sse?limit=30`);
+
+      // listen on event source
+      sse.onmessage = function (event) {
+        try {
+          if (event.data === "END") {
+            return;
+          }
+          const userDetails = JSON.parse(event.data);
+          const row = document.createElement("tr");
+
+          Object.values(userDetails).forEach((value) => {
+            const cell = document.createElement("td");
+            if (typeof value == "object") {
+              cell.textContent = value?.Time || "NULL";
+            } else {
+              cell.textContent = value;
+            }
+            row.appendChild(cell);
+          });
+
+          document.querySelector("#table tbody").appendChild(row);
+        } catch (error) {
+          console.error("Error parsing JSON data:", error);
+        }
+      };
+
+      // close the connection
+      sse.onclose = function () {
+        sse.close();
+      };
+
+      // handle error
+      sse.onerror = function (ev) {
+        console.error("error receiving data ", ev);
+        sse.close();
+      };
+    </script>
+  </body>
+</html>

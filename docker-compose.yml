@@ -1,0 +1,107 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:latest
+    container_name: rabbitmq
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    networks:
+      - app-network   
+
+  postgres:
+    image: postgres:latest
+    container_name: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=admin
+      - POSTGRES_DB=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -U postgres -d postgres
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test:  ["CMD", "redis-cli","ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
+  consumer:
+    build:
+      context: .
+      dockerfile: Dockerfile.consumer
+    container_name: consumer
+    environment:
+      - POSTGRES_CONN_URL=postgres://postgres:admin@postgres:5432/postgres?sslmode=disable
+      - RABBITMQ_CONN_URL=amqp://guest:guest@rabbitmq:5672/
+      - REDIS_CONN_URL=redis://default:@redis:6379/
+      - RABBITMQ_QUEUE_NAME=viswals
+      - DATABASE_NAME=postgres
+      - CONSUMER_PORT=:8080
+      - LOG_LEVEL=DEBUG
+      - ENCRYPTION_KEY=viswalsglobalinfotech
+      - MIGRATE_DB=true
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+
+
+  producer:
+    build:
+      context: .
+      dockerfile: Dockerfile.producer
+    container_name: producer
+    environment:
+      # - POSTGRES_CONN_URL=postgres://postgres:admin@postgres:5432/postgres?sslmode=disable
+      - RABBITMQ_CONN_URL=amqp://guest:guest@rabbitmq:5672/
+      - RABBITMQ_QUEUE_NAME=viswals
+      - LOG_LEVEL=DEBUG
+      - ENCRYPTION_KEY=viswalsglobalinfotech
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
+
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge

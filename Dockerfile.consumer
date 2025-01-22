@@ -1,0 +1,23 @@
+FROM golang:1.23 AS base
+
+WORKDIR /viswals
+
+COPY go.mod go.sum ./
+
+RUN go mod tidy
+
+COPY . .
+
+COPY .env .
+
+RUN CGO_ENABLED=0 go build ./cmd/consumer-service/ 
+
+FROM scratch 
+
+COPY --from=base /viswals/consumer-service /
+COPY --from=base /viswals/.env /
+COPY --from=base /viswals/csvs/demo.csv /
+COPY --from=base /viswals/csvs/users.csv /
+COPY --from=base /viswals/migrations/ /migrations
+
+CMD ["./consumer-service"]
